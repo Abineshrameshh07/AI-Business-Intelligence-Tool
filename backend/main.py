@@ -1,7 +1,3 @@
-"""Run it with:
-    uvicorn main:app --reload
-"""
-
 import os
 import shutil
 from pathlib import Path
@@ -51,13 +47,11 @@ def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
             detail=f"File type '{ext}' not supported. Allowed: {sorted(ALLOWED_EXTENSIONS)}",
         )
 
-    # Save file to disk. We prefix with a placeholder id-like timestamp to avoid
-    # overwriting files with the same name from different users.
     dest_path = UPLOAD_DIR / file.filename
     with open(dest_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Record it in the database
+    
     new_upload = Upload(
         filename=file.filename,
         file_type=ext.replace(".", ""),
@@ -66,7 +60,7 @@ def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     )
     db.add(new_upload)
     db.commit()
-    db.refresh(new_upload)  # refresh so new_upload.id is populated
+    db.refresh(new_upload)  
 
     return {
         "id": new_upload.id,
@@ -89,7 +83,7 @@ def drilldown(upload_id: int, column: str, value: str, db: Session = Depends(get
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
 
-    # Look for the pre-parsed JSON file saved during analysis
+
     parsed_path = upload.file_path + ".parsed.json"
 
     if not os.path.exists(parsed_path):
@@ -101,7 +95,7 @@ def drilldown(upload_id: int, column: str, value: str, db: Session = Depends(get
     with open(parsed_path, "r") as f:
         rows = json.load(f)
 
-    # Filter rows where the clicked column matches the clicked value
+ 
     filtered = [row for row in rows if str(row.get(column, "")) == str(value)]
 
     if not filtered:
