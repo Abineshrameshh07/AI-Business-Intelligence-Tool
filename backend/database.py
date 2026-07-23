@@ -29,8 +29,8 @@ class AnalysisResult(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     upload_id = Column(Integer, nullable=False)
-    summary_text = Column(Text, nullable=True)          # AI-written summary
-    chart_config_json = Column(Text, nullable=True)     # JSON describing chart(s) to render
+    summary_text = Column(Text, nullable=True)          
+    chart_config_json = Column(Text, nullable=True)    
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
