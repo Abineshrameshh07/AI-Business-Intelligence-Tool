@@ -1,0 +1,5 @@
+CREATE TABLE sales (city TEXT, amount INTEGER);
+INSERT INTO sales VALUES ('NYC', 100);
+INSERT INTO sales VALUES ('LA', 200);
+INSERT INTO sales VALUES ('Chicago', 150);
+SELECT * FROM sales;

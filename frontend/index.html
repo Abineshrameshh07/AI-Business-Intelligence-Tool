@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>AI BI System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+  }
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  button:hover { background: #1d4ed8; }
+  button.active {
+    background: #1e3a8a;
+    outline: 2px solid #93c5fd;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+  th { background: #62a3e4; font-weight: 600; }
+  #status { margin-top: 10px; font-size: 0.9rem; color: #555; }
+  #chartContainer { display: none; }
+  #chartTypeButtons { display: flex; gap: 8px; margin-bottom: 14px; }
+  #drillContainer { display: none; margin-top: 20px; }
+  #drillTitle { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+  #closedrillBtn {
+    background: #6b7280;
+    margin-left: 10px;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+  }
+  #closedrillBtn:hover { background: #4b5563; }
+  .nav-link { cursor: pointer; transition: background 0.15s; }
+  .nav-link:hover { background: #334155 !important; }
+</style>
+</head>
+<body>
+
+  <div style="display: flex; min-height: 100vh;">
+
+    <!-- SIDEBAR -->
+    <div style="width: 220px; background: #1e293b; min-height: 100vh; padding: 20px 0; flex-shrink: 0;">
+      <div style="padding: 0 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 16px;">
+        <span style="font-size: 16px; font-weight: 500; color: white;">AI BI System</span>
+      </div>
+      <div style="padding: 0 12px; display: flex; flex-direction: column; gap: 4px;">
+
+        <a id="nav-dashboard" class="nav-link"
+           onclick="showSection('dashboard')"
+           style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; background: #2563eb; text-decoration: none;">
+          <span style="font-size: 13px; color: white;">Dashboard</span>
+        </a>
+
+        <a id="nav-upload" class="nav-link"
+           onclick="showSection('upload')"
+           style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; text-decoration: none;">
+          <span style="font-size: 13px; color: #94a3b8;">Upload</span>
+        </a>
+
+        <a id="nav-files" class="nav-link"
+           onclick="showSection('files')"
+           style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; text-decoration: none;">
+          <span style="font-size: 13px; color: #94a3b8;">My files</span>
+        </a>
+
+      </div>
+    </div>
+    <!-- SIDEBAR END -->
+
+    <!-- MAIN CONTENT -->
+    <div style="flex: 1; padding: 30px; background: #f8fafc;">
+
+      <h1>AI BI System</h1>
+      <p style="color: #64748b; margin: 0 0 24px;">Upload a file and get AI-powered insights</p>
+
+      <!-- SECTION: Dashboard -->
+      <div id="section-dashboard">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+            <p style="font-size: 12px; color: #64748b; margin: 0 0 8px;">Total files</p>
+            <p style="font-size: 28px; font-weight: 500; color: #1a1a1a; margin: 0;" id="statTotal">0</p>
+          </div>
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+            <p style="font-size: 12px; color: #64748b; margin: 0 0 8px;">Analysed</p>
+            <p style="font-size: 28px; font-weight: 500; color: #2563eb; margin: 0;" id="statAnalysed">0</p>
+          </div>
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+            <p style="font-size: 12px; color: #64748b; margin: 0 0 8px;">File types</p>
+            <p style="font-size: 28px; font-weight: 500; color: #16a34a; margin: 0;" id="statTypes">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: Upload -->
+      <div id="section-upload" style="display: none;">
+        <div class="card">
+          <h3>Upload a file</h3>
+          <div id="dropZone" style="
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            margin-bottom: 12px;
+          " onclick="document.getElementById('fileInput').click()">
+            <div style="font-size: 36px; margin-bottom: 8px;">📂</div>
+            <p style="margin: 0 0 4px; font-weight: 500; color: #1a1a1a;">Drag and drop your file here</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;">or click to browse — CSV, DOCX, SQL supported</p>
+          </div>
+          <div id="status"></div>
+        </div>
+      </div>
+
+      <!-- SECTION: My Files -->
+      <div id="section-files" style="display: none;">
+        <div class="card">
+          <h3>Uploaded files</h3>
+          <table id="uploadsTable">
+            <thead>
+              <tr><th>ID</th><th>Filename</th><th>Type</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" id="chartContainer">
+          <h3 id="chartTitle">Chart</h3>
+          <div id="chartTypeButtons" style="display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex; gap:8px;">
+    <button id="btnBar"  onclick="switchChart('bar')"  class="active">Bar</button>
+    <button id="btnLine" onclick="switchChart('line')">Line</button>
+    <button id="btnPie"  onclick="switchChart('pie')">Pie</button>
+  </div>
+  <button onclick="downloadPDF()" style="background:#16a34a;">⬇ Download PDF</button>
+</div>
+          <canvas id="chartCanvas"></canvas>
+          <div id="drillContainer">
+            <div id="drillTitle">
+              Rows for: <span id="drillLabel"></span>
+              <button id="closedrillBtn" onclick="closeDrill()">✕ Close</button>
+            </div>
+            <table id="drillTable">
+              <thead id="drillHead"></thead>
+              <tbody id="drillBody"></tbody>
+            </table>
+          </div>
+          <div id="aiInsights" style="margin-top:16px; padding:12px; background:#f0f7ff; border-radius:8px; font-size:0.9rem; line-height:1.6; display:none;"></div>
+        </div>
+      </div>
+
+      <!-- File input lives outside all sections so it always works -->
+      <input type="file" id="fileInput" accept=".csv,.docx,.sql,.xlsx,.txt" style="display: none;">
+
+    </div>
+    <!-- MAIN CONTENT END -->
+
+  </div>
+
+<script>
+  const API_BASE = "http://localhost:8000";
+  let currentChart = null;
+  let currentData = null;
+
+  // Show/hide sections and update sidebar active state
+  function showSection(name) {
+    ["dashboard", "upload", "files"].forEach(s => {
+      document.getElementById("section-" + s).style.display = "none";
+    });
+    document.getElementById("section-" + name).style.display = "block";
+
+    ["dashboard", "upload", "files"].forEach(s => {
+      const link = document.getElementById("nav-" + s);
+      link.style.background = "transparent";
+      link.querySelector("span").style.color = "#94a3b8";
+    });
+    const activeLink = document.getElementById("nav-" + name);
+    activeLink.style.background = "#2563eb";
+    activeLink.querySelector("span").style.color = "white";
+  }
+
+  // Drag and drop
+  const dropZone = document.getElementById("dropZone");
+
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.style.background = "#eff6ff";
+    dropZone.style.borderColor = "#2563eb";
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.style.background = "";
+    dropZone.style.borderColor = "#cbd5e1";
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.style.background = "";
+    dropZone.style.borderColor = "#cbd5e1";
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById("fileInput").files = dt.files;
+    uploadFile();
+  });
+
+  // File input change — triggers when user picks a file via browse
+  document.getElementById("fileInput").addEventListener("change", () => {
+    uploadFile();
+  });
+
+  async function uploadFile() {
+    const input = document.getElementById("fileInput");
+    const statusEl = document.getElementById("status");
+    if (!input.files.length) { statusEl.textContent = "Please choose a file first."; return; }
+    const formData = new FormData();
+    formData.append("file", input.files[0]);
+    statusEl.textContent = "Uploading...";
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Upload failed"); }
+      const data = await res.json();
+      statusEl.textContent = `Uploaded "${data.filename}" successfully (ID ${data.id}).`;
+      input.value = "";
+      loadUploads();
+      showSection('files');
+    } catch (e) { statusEl.textContent = "Error: " + e.message; }
+  }
+
+  async function loadUploads() {
+    const res = await fetch(`${API_BASE}/uploads`);
+    const uploads = await res.json();
+    const tbody = document.querySelector("#uploadsTable tbody");
+    tbody.innerHTML = "";
+    uploads.forEach(u => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${u.id}</td>
+        <td>${u.filename}</td>
+        <td>${u.file_type}</td>
+        <td>${u.status}</td>
+        <td><button onclick="analyzeFile(${u.id})">Analyze</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+    const total = uploads.length;
+    const analysed = uploads.filter(u => u.status === "analyzed").length;
+    const types = new Set(uploads.map(u => u.file_type)).size;
+    document.getElementById("statTotal").textContent = total;
+    document.getElementById("statAnalysed").textContent = analysed;
+    document.getElementById("statTypes").textContent = types;
+  }
+
+  async function analyzeFile(uploadId) {
+    const statusEl = document.getElementById("status");
+    statusEl.textContent = "Analyzing...";
+    try {
+      const res = await fetch(`${API_BASE}/analyze/${uploadId}`, { method: "POST" });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Analysis failed"); }
+      const data = await res.json();
+      statusEl.textContent = "Analysis complete.";
+      currentData = data;
+      renderChart(data.chart_config, data.ai_insights, data.chart_config.chart_type);
+      loadUploads();
+      showSection('files');
+    } catch (e) { statusEl.textContent = "Error: " + e.message; }
+  }
+
+  function switchChart(type) {
+    if (!currentData) return;
+    ["Bar", "Line", "Pie"].forEach(t => {
+      document.getElementById("btn" + t).classList.remove("active");
+    });
+    document.getElementById("btn" + type.charAt(0).toUpperCase() + type.slice(1)).classList.add("active");
+    const config = { ...currentData.chart_config, chart_type: type };
+    renderChart(config, currentData.ai_insights, type);
+    closeDrill();
+  }
+
+  function renderChart(config, aiInsights, chartType) {
+    const container = document.getElementById("chartContainer");
+    const titleEl   = document.getElementById("chartTitle");
+    const canvas    = document.getElementById("chartCanvas");
+    if (!config.chart_type && !chartType) { container.style.display = "none"; return; }
+    container.style.display = "block";
+    titleEl.textContent = config.title;
+    if (currentChart) currentChart.destroy();
+    const type = chartType || config.chart_type;
+    currentChart = new Chart(canvas, {
+      type: type,
+      data: {
+        labels: config.labels,
+        datasets: [{
+          label: config.title,
+          data: config.values,
+          backgroundColor: [
+            "#2563eb","#16a34a","#dc2626","#ea580c",
+            "#9333ea","#0891b2","#ca8a04","#db2777",
+            "#0d9488","#b45309"
+          ],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: type === "pie" } },
+        onClick: (event, elements) => {
+          if (type !== "bar") return;
+          if (!elements.length) return;
+          const clickedIndex = elements[0].index;
+          const clickedLabel = config.labels[clickedIndex];
+          showDrill(clickedLabel);
+        }
+      }
+    });
+    const insightsEl = document.getElementById("aiInsights");
+    if (aiInsights) {
+      insightsEl.style.display = "block";
+      insightsEl.innerHTML = "<strong>AI Insights</strong><br><br>" + aiInsights.replace(/\n/g, "<br>");
+    } else {
+      insightsEl.style.display = "none";
+    }
+  }
+
+  async function showDrill(label) {
+    if (!currentData) return;
+    const catCol = currentData.summary.categorical_columns[0];
+    if (!catCol) return;
+    try {
+      const res = await fetch(
+        `${API_BASE}/drilldown?upload_id=${currentData.upload_id}&column=${encodeURIComponent(catCol)}&value=${encodeURIComponent(label)}`
+      );
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!rows.length) return;
+      const columns = Object.keys(rows[0]);
+      document.getElementById("drillLabel").textContent = label;
+      document.getElementById("drillHead").innerHTML =
+        "<tr>" + columns.map(c => `<th>${c}</th>`).join("") + "</tr>";
+      document.getElementById("drillBody").innerHTML =
+        rows.map(row =>
+          "<tr>" + columns.map(c => `<td>${row[c]}</td>`).join("") + "</tr>"
+        ).join("");
+      document.getElementById("drillContainer").style.display = "block";
+    } catch (e) { console.error("Drill-down failed:", e); }
+  }
+
+  function closeDrill() {
+    document.getElementById("drillContainer").style.display = "none";
+  }
+async function downloadPDF() {
+  // Check we have data and a chart
+  if (!currentData || !currentChart) {
+    alert("Please analyze a file first before downloading.");
+    return;
+  }
+
+  // jsPDF is loaded as a global — we access it like this
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4"); // portrait, millimeters, A4 size
+
+  const pageWidth = 210;   // A4 width in mm
+  const margin = 15;       // left and right margin
+  const contentWidth = pageWidth - margin * 2;  // usable width
+  let y = 20;  // current vertical position (starts 20mm from top)
+
+  // ── HEADER ──────────────────────────────────────────────
+  doc.setFillColor(30, 41, 59);          // dark blue (your sidebar color)
+  doc.rect(0, 0, pageWidth, 18, "F");    // filled rectangle across the top
+
+  doc.setTextColor(255, 255, 255);       // white text
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("AI BI System — Analysis Report", margin, 12);
+
+  y = 28;
+
+  // ── FILE INFO ────────────────────────────────────────────
+  doc.setTextColor(100, 116, 139);       // grey
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  const now = new Date().toLocaleString();
+  doc.text(`Generated: ${now}`, margin, y);
+  y += 6;
+
+  if (currentData.summary) {
+    doc.text(
+      `File: ${currentData.summary.columns ? currentData.summary.columns.join(", ") : "N/A"} — ${currentData.summary.row_count} rows`,
+      margin, y
+    );
+    y += 10;
+  }
+
+  // ── CHART TITLE ──────────────────────────────────────────
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text(currentData.chart_config.title || "Chart", margin, y);
+  y += 8;
+
+  // ── CHART IMAGE ──────────────────────────────────────────
+  // Chart.js can export itself as a base64 PNG image
+  const canvas = document.getElementById("chartCanvas");
+  const chartImage = canvas.toDataURL("image/png");
+
+  const chartHeight = contentWidth * 0.6;  // keep aspect ratio
+  doc.addImage(chartImage, "PNG", margin, y, contentWidth, chartHeight);
+  y += chartHeight + 10;
+
+  // ── AI INSIGHTS ──────────────────────────────────────────
+  const insightsText = document.getElementById("aiInsights").innerText;
+
+  if (insightsText && insightsText.trim()) {
+    // Section header
+    doc.setFillColor(240, 247, 255);     // light blue background
+    doc.rect(margin, y, contentWidth, 8, "F");
+    doc.setTextColor(37, 99, 235);       // blue text
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("AI Insights", margin + 3, y + 5.5);
+    y += 12;
+
+    // Insights text — split into lines so it wraps properly
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+
+    // Remove the "AI Insights" heading from the text (it's already in the header above)
+    const cleanText = insightsText.replace("AI Insights", "").trim();
+
+    // splitTextToSize wraps text to fit within contentWidth
+    const lines = doc.splitTextToSize(cleanText, contentWidth);
+
+    lines.forEach(line => {
+      // If we're near the bottom of the page, add a new page
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(line, margin, y);
+      y += 6;
+    });
+  }
+
+  // ── FOOTER ───────────────────────────────────────────────
+  doc.setTextColor(150, 150, 150);
+  doc.setFontSize(8);
+  doc.text("Generated by AI BI System", margin, 290);
+  doc.text("Page 1", pageWidth - margin - 10, 290);
+
+  // ── SAVE ─────────────────────────────────────────────────
+  const filename = `AI_BI_Report_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(filename);  // triggers download in the browser
+}
+  loadUploads();
+</script>
+
+</body>
+</html>
