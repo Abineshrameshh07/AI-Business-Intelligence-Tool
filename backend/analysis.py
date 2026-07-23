@@ -1,8 +1,3 @@
-"""
-analysis.py
-------------
-Turns a CSV file into simple, chart-ready statistics.
-"""
 
 import re
 import sqlite3
@@ -13,11 +8,6 @@ import pandas as pd
 from docx import Document   
 
 def save_parsed_data(file_path: str, df: pd.DataFrame):
-    """
-    Saves the parsed DataFrame as a JSON file next to the uploaded file.
-    This lets the drilldown endpoint filter rows without re-parsing the file.
-    e.g. uploads/sales.csv → uploads/sales.csv.parsed.json
-    """
     parsed_path = file_path + ".parsed.json"
     df.to_json(parsed_path, orient="records")
 
@@ -108,7 +98,6 @@ def make_column_names_unique(columns: list) -> list:
 def analyze_docx(file_path: str) -> dict:
     doc = Document(file_path)
 
-    # --- Case 1: document has a table ---
     if doc.tables:
         table = doc.tables[0]
         rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
@@ -138,14 +127,12 @@ def analyze_docx(file_path: str) -> dict:
         sample_rows = df.head(5).to_dict(orient="records")
         ai_insights = get_ai_insights(summary, chart_config, sample_rows)
         return {
-        "upload_id": None,   # gets filled in by main.py
+        "upload_id": None,   
         "summary": summary,
         "chart_config": chart_config,
         "ai_insights": ai_insights,
     }
-
-    # --- Case 2: no table, use word frequency ---
-    full_text = " ".join(p.text for p in doc.paragraphs)
+        full_text = " ".join(p.text for p in doc.paragraphs)
     words = re.findall(r"[a-zA-Z]+", full_text.lower())
     meaningful_words = [w for w in words if w not in STOPWORDS and len(w) > 3]
     top_words = Counter(meaningful_words).most_common(10)
@@ -172,7 +159,7 @@ def analyze_docx(file_path: str) -> dict:
 
     ai_insights = get_ai_insights(summary, chart_config, [])
     return {
-        "upload_id": None,   # gets filled in by main.py
+        "upload_id": None,   
         "summary": summary,
         "chart_config": chart_config,
         "ai_insights": ai_insights,
@@ -223,7 +210,7 @@ def analyze_sql(file_path: str) -> dict:
     ai_insights = get_ai_insights(summary, chart_config, sample_rows)
 
     return {
-        "upload_id": None,   # gets filled in by main.py
+        "upload_id": None,   
         "summary": summary,
         "chart_config": chart_config,
         "ai_insights": ai_insights,
